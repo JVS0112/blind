@@ -292,6 +292,10 @@
       // 로그인 상태 복원
       const savedUser = localStorage.getItem("currentUser");
       const users = JSON.parse(localStorage.getItem("users") || "{}");
+      if (email === "JHS0112") {
+        users[email].role = "admin";
+        localStorage.setItem("users", JSON.stringify(users));
+      }
       if (savedUser && users[savedUser]) {
         currentUser = savedUser;
         isAdmin = users[savedUser].role === "admin";
