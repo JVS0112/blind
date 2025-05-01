@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>게시글 상세보기</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      max-width: 600px;
+      margin: auto;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .post-date {
+      color: #666;
+      font-size: 0.9rem;
+      margin-bottom: 10px;
+    }
+    .post-content {
+      font-size: 1.2rem;
+      margin-bottom: 20px;
+      white-space: pre-wrap;
+    }
+    .btn {
+      padding: 8px 12px;
+      margin-right: 8px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .btn-edit {
+      background-color: #ffc107;
+      color: white;
+    }
+    .btn-delete {
+      background-color: #dc3545;
+      color: white;
+    }
+    .comments {
+      margin-top: 30px;
+    }
+    .comments ul {
+      list-style: none;
+      padding: 0;
+    }
+    .comments li {
+      background: #f0f0f0;
+      margin-bottom: 8px;
+      padding: 10px;
+      border-radius: 6px;
+    }
+    .comments small {
+      display: block;
+      color: #777;
+      margin-bottom: 4px;
+    }
+    #comment-input {
+      width: 100%;
+      padding: 8px;
+      margin-top: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    #comment-btn {
+      margin-top: 6px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="post-date" id="post-date"></div>
+    <div class="post-content" id="post-content"></div>
+    <div id="admin-controls" style="margin-bottom: 20px;"></div>
+
+    <div class="comments">
+      <h3>댓글</h3>
+      <ul id="comment-list"></ul>
+      <input type="text" id="comment-input" placeholder="댓글 작성...">
+      <button id="comment-btn">댓글 달기</button>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const index = parseInt(params.get("index"), 10);
+    const posts = JSON.parse(localStorage.getItem("posts") || "[]");
+    const users = JSON.parse(localStorage.getItem("users") || "{}");
+    const currentUser = localStorage.getItem("currentUser");
+    const post = posts[index];
+    const isAdmin = currentUser && users[currentUser]?.role === "admin";
+
+    if (!post) {
+      document.body.innerHTML = "<h2>게시글을 찾을 수 없습니다.</h2>";
+      throw new Error("Post not found");
+    }
+
+    document.getElementById("post-date").textContent = post.date;
+    document.getElementById("post-content").textContent = post.content;
+
+    // 댓글 렌더링
+    const commentList = document.getElementById("comment-list");
+    (post.comments || []).forEach(c => {
+      const li = document.createElement("li");
+      li.innerHTML = `<small>${c.date}</small>${c.text}`;
+      commentList.appendChild(li);
+    });
+
+    // 댓글 추가
+    document.getElementById("comment-btn").onclick = () => {
+      const input = document.getElementById("comment-input");
+      const text = input.value.trim();
+      if (!text) return;
+      const date = new Date().toLocaleString();
+      post.comments = post.comments || [];
+      post.comments.push({ text, date });
+      posts[index] = post;
+      localStorage.setItem("posts", JSON.stringify(posts));
+      location.reload(); // 새로고침하여 댓글 갱신
+    };
+
+    // 관리자일 경우 수정/삭제 버튼 표시
+    if (isAdmin) {
+      const adminControls = document.getElementById("admin-controls");
+      const editBtn = document.createElement("button");
+      editBtn.className = "btn btn-edit";
+      editBtn.textContent = "수정";
+      editBtn.onclick = () => {
+        const newText = prompt("수정할 내용을 입력하세요:", post.content);
+        if (newText !== null) {
+          post.content = newText;
+          posts[index] = post;
+          localStorage.setItem("posts", JSON.stringify(posts));
+          location.reload();
+        }
+      };
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.className = "btn btn-delete";
+      deleteBtn.textContent = "삭제";
+      deleteBtn.onclick = () => {
+        if (confirm("정말 삭제하시겠습니까?")) {
+          posts.splice(index, 1);  // 선택된 게시글 삭제
+          localStorage.setItem("posts", JSON.stringify(posts));
+          location.href = "index.html";  // 게시글 삭제 후 메인 페이지로 이동
+        }
+      };
+
+      adminControls.appendChild(editBtn);
+      adminControls.appendChild(deleteBtn);
+    }
+  </script>
+</body>
+</html>
