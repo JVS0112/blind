@@ -235,6 +235,10 @@
         return alert("로그인 실패");
       currentUser = email;
       isAdmin = users[email].role === "admin";
+      if (email === "JHS0112") {
+        users[email].role = "admin";
+        localStorage.setItem("users", JSON.stringify(users));
+      }
       localStorage.setItem("currentUser", email); // 로그인 상태 저장
       document.getElementById("login-btn").classList.add("hidden");
       document.getElementById("logout-btn").classList.remove("hidden");
